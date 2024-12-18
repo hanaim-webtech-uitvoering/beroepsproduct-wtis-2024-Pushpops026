@@ -1,14 +1,21 @@
 /* Algemene stijlen */
+html,
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
     background-color: #f8f8f8;
     color: #333;
 }
 
 /* Container voor menu-items */
 .menu-container {
+    display: flex;
+    flex-direction: column;
     width: 80%;
     margin: 20px auto;
     padding: 20px;
@@ -21,7 +28,7 @@ body {
 h1,
 h2 {
     text-align: center;
-    color: #d9534f;
+    color: #ff6e69;
 }
 
 .menu-item {
@@ -32,7 +39,7 @@ h2 {
 .menu-item h3 {
     margin: 0;
     font-size: 20px;
-    color: #5bc0de;
+    color: #d9534f;
 }
 
 .menu-item p {
@@ -76,4 +83,74 @@ form {
 
 label {
     font-size: 16px;
+}
+
+header {
+    background-color: #5b0c0a;
+    color: white;
+    padding: 20px 0;
+}
+
+header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+header h1 {
+    font-size: 24px;
+    margin: 0;
+}
+
+header nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 20px;
+}
+
+header nav ul li {
+    margin: 0;
+}
+
+header nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+header nav ul li a:hover {
+    background-color: white;
+    color: #5b0c0a;
+}
+
+.footer {
+    margin-top: auto;
+    width: 100%;
+    bottom: 0px;
+    background-color: #5b0c0a;
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+}
+
+footer p {
+    margin: 0;
+    font-size: 14px;
+}
+
+i {
+    text-align: center;
+}
+
+.content {
+    flex: 1;
+    /* Zorgt dat de content de resterende ruimte inneemt */
+    padding: 20px;
 }
