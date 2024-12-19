@@ -1,12 +1,45 @@
 <?php
 session_start();
-
+echo "<pre>";
+print_r($_SESSION);  // Debug: Bekijk de inhoud van de sessie
+echo "</pre>";
 include 'header.php';
 require_once 'db_connectie.php';
 
 // maak verbinding met de database
 $db = maakVerbinding();
 
+if (isset($_SESSION['username'])) {
+    echo "<p>Welkom, " . htmlspecialchars($_SESSION['username']) . "!</p>";
+} else {
+    echo "<p>Je bent niet ingelogd.</p>";
+}
+
+$_SESSION['bestelling'] = $_SESSION['bestelling'] ?? [];
+
+
+// Hier wordt de productenlijst opgehaald zoals je het al hebt ingesteld
+$query = "SELECT name, price, type_id FROM Product";
+$stmt = $db->query($query);
+$producten = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Als er een product wordt toegevoegd aan de bestelling
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['product_name'], $_POST['hoeveelheid'])) {
+    $product_name = $_POST['product_name'];
+    $hoeveelheid = (int) $_POST['hoeveelheid'];
+
+    if ($hoeveelheid > 0) {
+        if (!isset($_SESSION['bestelling'][$product_name])) {
+            $_SESSION['bestelling'][$product_name] = $hoeveelheid; // Voeg nieuw product toe
+        } else {
+            $_SESSION['bestelling'][$product_name] += $hoeveelheid; // Verhoog bestaande hoeveelheid
+        }
+    }
+}
+
+
+
+/*
 if (!isset($_SESSION['bestelling'])) {
     $_SESSION['bestelling'] = [];
 }
@@ -47,6 +80,7 @@ try {
 } catch (PDOException $e) {
     die("Fout bij ophalen van producten: " . $e->getMessage());
 }
+    */
 ?>
 
 <!DOCTYPE html>

@@ -6,6 +6,7 @@ $db = maakVerbinding();
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
+    $client_name = htmlspecialchars($_POST['name'] ?? 'Gast'); // Gast of opgegeven naam
     $address = htmlspecialchars($_POST['address']);
     $order_items = $_SESSION['bestelling'] ?? [];
 

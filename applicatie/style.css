@@ -24,6 +24,7 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+
 /* Titels */
 h1,
 h2 {
@@ -51,21 +52,6 @@ h2 {
     border-bottom: none;
 }
 
-/* Knoppen */
-.button {
-    display: inline-block;
-    margin-top: 10px;
-    padding: 10px 15px;
-    color: #fff;
-    background-color: #5cb85c;
-    text-decoration: none;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
-}
-
-.button:hover {
-    background-color: #4cae4c;
-}
 
 input[type="number"] {
     width: 60px;
@@ -75,10 +61,26 @@ input[type="number"] {
     text-align: center;
 }
 
-form {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+
+form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+form button:hover {
+    background-color: #6d1d1b;
+}
+
+form button {
+    width: auto;
+    padding: 5px;
+    background-color: #5b0c0a;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
 }
 
 label {

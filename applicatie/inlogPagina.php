@@ -1,49 +1,89 @@
 <?php
+session_start();
+echo "<pre>";
+print_r($_SESSION);  // Debug: Bekijk de inhoud van de sessie
+echo "</pre>";
+include 'header.php';
 require_once 'db_connectie.php';
 
-// maak verbinding met de database (zie db_connection.php)
+// Verbinding maken met de database
 $db = maakVerbinding();
+$message = '';
 
+// Verwerk loginformulier
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
+    $username = htmlspecialchars($_POST['username']);
+    $password = htmlspecialchars($_POST['password']);
 
+    if (empty($username) || empty($password)) {
+        $message = "Vul zowel een gebruikersnaam als een wachtwoord in.";
+    } else {
+        try {
+            // Zoek gebruiker op basis van de gebruikersnaam
+            $query = "SELECT username, password, role FROM [User] WHERE username = :username";
+            $stmt = $db->prepare($query);
+            $stmt->execute([':username' => $username]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// haal alle componisten op en tel het aantal stukken
-$query = 'select c.componistId as id, c.naam as naam, count(S.stuknr) as aantal
-from Componist C left outer join Stuk S on C.componistId = S.componistId
-group by C.componistId, C.naam
-order by naam';
+            // Als de gebruiker bestaat en het wachtwoord klopt
+            if ($user && password_verify($password, $user['password'])) {
+                // Sessie-instellingen voor de ingelogde gebruiker
+                $_SESSION['username'] = $user['username'];
+                $_SESSION['role'] = $user['role'];
 
-$data = $db->query($query);
+                // Redirect naar de juiste pagina op basis van de rol
+                if ($user['role'] === 'Client') {
+                    // Eerst de sessie-instellingen verwerken, daarna doorsturen
+                    header("Location: index.php");
 
-$html_table = '<table>';
-$html_table = $html_table . '<tr><th>Id</th><th>Naam</th><th>Aantal stukken</th></tr>';
+                } elseif ($user['role'] === 'Personnel') {
+                    // Eerst de sessie-instellingen verwerken, daarna doorsturen
+                    header("Location: personeelDashboard.php");
 
-while ($rij = $data->fetch()) {
-    $id = $rij['id'];
-    $naam = $rij['naam'];
-    $aantal = $rij['aantal'];
-
-    $html_table = $html_table . "<tr><td>$id</td><td>$naam</td><td>$aantal</td></tr>";
+                }
+                exit(1);
+            } else {
+                $message = "Ongeldige gebruikersnaam of wachtwoord.";
+            }
+        } catch (PDOException $e) {
+            $message = "Er is een fout opgetreden: " . $e->getMessage();
+        }
+    }
 }
-$html_table = $html_table . "</table>";
 ?>
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-
-    </style>
     <title>Inloggen</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <h1>Log in</h1>
-    <?php
+    <h1>Inloggen</h1>
 
-    ?>
+    <form method="POST" action="">
+        <label for="username">Gebruikersnaam:</label>
+        <input type="text" id="username" name="username" required>
+
+        <label for="password">Wachtwoord:</label>
+        <input type="password" id="password" name="password" required>
+
+        <button type="submit" name="login">Inloggen</button>
+    </form>
+
+    <?php if (!empty($message)): ?>
+        <p><?php echo $message; ?></p>
+    <?php endif; ?>
+
+    <p>Heb je nog geen account? <a href="registratie.php">Registreer hier</a></p>
 </body>
+
+<?php
+include 'footer.php';
+?>
 
 </html>
