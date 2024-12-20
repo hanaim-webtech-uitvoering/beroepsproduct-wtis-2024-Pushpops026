@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $confirm_password = htmlspecialchars($_POST['confirm_password']);
     $first_name = htmlspecialchars($_POST['first_name']);
     $last_name = htmlspecialchars($_POST['last_name']);
-    $role = 'klant'; // Standaard rol is klant
+    $role = 'Client';
 
     // Validatie
     if (empty($username) || empty($password) || empty($first_name) || empty($last_name)) {

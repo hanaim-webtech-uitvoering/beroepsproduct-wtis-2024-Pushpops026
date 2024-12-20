@@ -1,8 +1,5 @@
 <?php
 session_start();
-echo "<pre>";
-print_r($_SESSION);  // Debug: Bekijk de inhoud van de sessie
-echo "</pre>";
 include 'header.php';
 require_once 'db_connectie.php';
 
@@ -26,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             // Als de gebruiker bestaat en het wachtwoord klopt
-            if ($user && password_verify($password, $user['password'])) {
+            if ($user && password_verify($password, $user['password']) || $user && $password === $user['password']) {
                 // Sessie-instellingen voor de ingelogde gebruiker
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['role'] = $user['role'];
@@ -34,14 +31,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
                 // Redirect naar de juiste pagina op basis van de rol
                 if ($user['role'] === 'Client') {
                     // Eerst de sessie-instellingen verwerken, daarna doorsturen
-                    header("Location: index.php");
+                    header("Location:index.php");
+                    exit;
 
                 } elseif ($user['role'] === 'Personnel') {
                     // Eerst de sessie-instellingen verwerken, daarna doorsturen
-                    header("Location: personeelDashboard.php");
-
+                    header("Location:personeelDashboard.php");
+                    exit;
                 }
-                exit(1);
+                exit;
             } else {
                 $message = "Ongeldige gebruikersnaam of wachtwoord.";
             }
