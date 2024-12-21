@@ -5,12 +5,16 @@
         <nav>
             <ul>
                 <li><a href="index.php">Home</a></li>
-                <?php if (isset($_SESSION['username'])): ?>
+                <?php if (isset($_SESSION['role'])): ?>
                     <li>Welkom, <?php echo htmlspecialchars($_SESSION['username']); ?></li>
+                    <?php if ($_SESSION['role'] === 'Client'): ?>
+                        <li><a href="klantBestelOverzicht.php">Mijn Bestelling</a></li>
+                    <?php elseif ($_SESSION['role'] === 'Personnel'): ?>
+                        <li><a href="personeelDashboard.php">Dashboard</a></li>
+                    <?php endif; ?>
                     <li><a href="uitloggen.php">Uitloggen</a></li>
                 <?php else: ?>
-                    <li><a href="inlogPagina.php">Log in</a></li>
-                    <li><a href="registratie.php">Registreren</a></li>
+                    <li><a href="inlogPagina.php">Inloggen</a></li>
                 <?php endif; ?>
             </ul>
         </nav>

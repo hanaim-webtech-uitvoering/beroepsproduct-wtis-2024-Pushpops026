@@ -32,12 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
                 if ($user['role'] === 'Client') {
                     // Eerst de sessie-instellingen verwerken, daarna doorsturen
                     header("Location:index.php");
-                    exit;
 
                 } elseif ($user['role'] === 'Personnel') {
                     // Eerst de sessie-instellingen verwerken, daarna doorsturen
                     header("Location:personeelDashboard.php");
-                    exit;
                 }
                 exit;
             } else {
