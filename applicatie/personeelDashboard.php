@@ -135,7 +135,7 @@ $active_orders = array_filter($orders, function ($order) {
         <p>Er zijn geen toegewezen bestellingen.</p>
     <?php endif; ?>
 
-    <!-- Sectie: Geannuleerde bestellingen -->
+    <!-- Sectie: Geannuleerde bestellingen (WERKT NOG NIET)-->
     <h2>Geannuleerde Bestellingen</h2>
     <?php if ($cancelled_orders): ?>
         <ul>
