@@ -28,10 +28,27 @@ $order = $stmt->fetch(PDO::FETCH_ASSOC);
 
 $status_map = [
     0 => 'In behandeling',
-    1 => 'Klaar voor levering',
+    1 => 'Bereid',
     2 => 'Bezorgd',
     3 => 'Geannuleerd'
 ];
+
+// Annuleer de bestelling
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order']) && $order) {
+    $update_query = "
+        UPDATE [Pizza_Order]
+        SET status = 3
+        WHERE order_id = :order_id
+    ";
+    $update_stmt = $db->prepare($update_query);
+    $update_stmt->execute([':order_id' => $order['order_id']]);
+
+    $message = "Uw bestelling is geannuleerd.";
+    // Refresh de bestelling na annulering
+    header("Location: klantBestelOverzicht.php");
+    exit;
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -53,6 +70,13 @@ $status_map = [
         <p><strong>Bestelling geplaatst op:</strong> <?php echo $order['datetime']; ?></p>
         <p><strong>Huidige status:</strong> <?php echo $status_map[$order['status']] ?? 'Onbekend'; ?></p>
         <p><strong>Personeelslid toegewezen:</strong> <?php echo htmlspecialchars($order['personnel_username']); ?></p>
+        <?php if ($order['status'] !== 3): ?>
+            <form method="POST" action="">
+                <button type="submit" name="cancel_order">Annuleer Bestelling</button>
+            </form>
+        <?php else: ?>
+            <p><strong>Status:</strong> Deze bestelling is geannuleerd.</p>
+        <?php endif; ?>
     <?php else: ?>
         <p>Er zijn geen bestellingen gevonden voor uw account.</p>
     <?php endif; ?>
