@@ -62,6 +62,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
             ':address' => $address
         ]);
 
+        // Haal het laatst ingevoegde order_id op
+        $order_id = $db->lastInsertId();
+
+        // Voeg de producten toe aan de Pizza_Order_Product-tabel
+        $insertItem = "INSERT INTO [Pizza_Order_Product] (order_id, product_name, quantity) VALUES (:order_id, :product_name, :quantity)";
+        $itemStmt = $db->prepare($insertItem);
+
+        foreach ($order_items as $product => $hoeveelheid) {
+            $itemStmt->execute([
+                ':order_id' => $order_id,
+                ':product_name' => $product,
+                ':quantity' => $hoeveelheid
+            ]);
+        }
+
         // Bericht weergeven
         $message = "Bestelling geplaatst! Jouw bestelling wordt bezorgd op: $address";
 

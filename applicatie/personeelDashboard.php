@@ -45,26 +45,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_order'])) {
     exit;
 }
 
-// Haal alle bestellingen op die aan het personeelslid zijn toegewezen
-$query = "
+// Actieve bestellingen ophalen (status ≠ geannuleerd)
+$active_query = "
     SELECT order_id, client_name, datetime, status, address
     FROM [Pizza_Order]
-    WHERE personnel_username = :personnel_username
+    WHERE personnel_username = :personnel_username AND status != 3
     ORDER BY datetime DESC
 ";
-$stmt = $db->prepare($query);
-$stmt->execute([':personnel_username' => $username]);
-$orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$active_stmt = $db->prepare($active_query);
+$active_stmt->execute([':personnel_username' => $username]);
+$active_orders = $active_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Haal geannuleerde bestellingen op
-$cancelled_orders = array_filter($orders, function ($order) {
-    return $order['status'] === 3;
-});
-
-// Haal actieve bestellingen op
-$active_orders = array_filter($orders, function ($order) {
-    return $order['status'] !== 3;
-});
+// Geannuleerde bestellingen ophalen (status = geannuleerd)
+$cancelled_query = "
+    SELECT order_id, client_name, datetime, status, address
+    FROM [Pizza_Order]
+    WHERE personnel_username = :personnel_username AND status = 3
+    ORDER BY datetime DESC
+";
+$cancelled_stmt = $db->prepare($cancelled_query);
+$cancelled_stmt->execute([':personnel_username' => $username]);
+$cancelled_orders = $cancelled_stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -85,8 +86,8 @@ $active_orders = array_filter($orders, function ($order) {
         <p><?php echo htmlspecialchars($message); ?></p>
     <?php endif; ?>
 
-    <!-- Sectie: Toegewezen bestellingen -->
-    <h2>Toegewezen Bestellingen</h2>
+    <!-- Sectie: Actieve Bestellingen -->
+    <h2>Actieve Bestellingen</h2>
     <?php if ($active_orders): ?>
         <table border="1">
             <tr>
@@ -104,7 +105,6 @@ $active_orders = array_filter($orders, function ($order) {
                     <td><?php echo htmlspecialchars($order['datetime']); ?></td>
                     <td>
                         <?php
-                        // Status weergeven als tekst
                         $status_labels = [
                             0 => 'In behandeling',
                             1 => 'Bereid',
@@ -116,7 +116,6 @@ $active_orders = array_filter($orders, function ($order) {
                     </td>
                     <td><?php echo htmlspecialchars($order['address']); ?></td>
                     <td>
-                        <!-- Dropdownmenu voor statuswijziging -->
                         <form method="POST" action="">
                             <input type="hidden" name="order_id" value="<?php echo $order['order_id']; ?>">
                             <select name="status" required>
@@ -132,27 +131,35 @@ $active_orders = array_filter($orders, function ($order) {
             <?php endforeach; ?>
         </table>
     <?php else: ?>
-        <p>Er zijn geen toegewezen bestellingen.</p>
+        <p>Er zijn geen actieve bestellingen.</p>
     <?php endif; ?>
 
-    <!-- Sectie: Geannuleerde bestellingen (WERKT NOG NIET)-->
+    <!-- Sectie: Geannuleerde Bestellingen -->
     <h2>Geannuleerde Bestellingen</h2>
     <?php if ($cancelled_orders): ?>
-        <ul>
+        <table border="1">
+            <tr>
+                <th>Bestelling ID</th>
+                <th>Klantnaam</th>
+                <th>Datum</th>
+                <th>Adres</th>
+                <th>Acties</th>
+            </tr>
             <?php foreach ($cancelled_orders as $order): ?>
-                <li>
-                    <p><strong>Bestelnummer:</strong> <?php echo htmlspecialchars($order['order_id']); ?></p>
-                    <p><strong>Klant:</strong> <?php echo htmlspecialchars($order['client_name']); ?></p>
-                    <p><strong>Bezorgadres:</strong> <?php echo htmlspecialchars($order['address']); ?></p>
-                    <p><strong>Bestelling geplaatst op:</strong> <?php echo $order['datetime']; ?></p>
-
-                    <form method="POST" action="">
-                        <input type="hidden" name="order_id" value="<?php echo $order['order_id']; ?>">
-                        <button type="submit" name="delete_order">Verwijder Bestelling</button>
-                    </form>
-                </li>
+                <tr>
+                    <td><?php echo htmlspecialchars($order['order_id']); ?></td>
+                    <td><?php echo htmlspecialchars($order['client_name']); ?></td>
+                    <td><?php echo htmlspecialchars($order['datetime']); ?></td>
+                    <td><?php echo htmlspecialchars($order['address']); ?></td>
+                    <td>
+                        <form method="POST" action="">
+                            <input type="hidden" name="order_id" value="<?php echo $order['order_id']; ?>">
+                            <button type="submit" name="delete_order">Verwijder Bestelling</button>
+                        </form>
+                    </td>
+                </tr>
             <?php endforeach; ?>
-        </ul>
+        </table>
     <?php else: ?>
         <p>Er zijn geen geannuleerde bestellingen.</p>
     <?php endif; ?>
