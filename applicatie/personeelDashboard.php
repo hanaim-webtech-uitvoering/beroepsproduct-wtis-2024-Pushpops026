@@ -31,20 +31,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'], $_POST['s
     $message = "De status van bestelling #$order_id is bijgewerkt.";
 }
 
-// Verwijder bestelling
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_order'])) {
-    $delete_query = "
-        DELETE FROM [Pizza_Order]
-        WHERE order_id = :order_id
-    ";
-    $delete_stmt = $db->prepare($delete_query);
-    $delete_stmt->execute([':order_id' => $_POST['order_id']]);
-    $message = "De bestelling is succesvol verwijderd.";
-    // Refresh de pagina na verwijderen
-    header("Location: personeelDashboard.php");
-    exit;
-}
-
 // Actieve bestellingen ophalen (status ≠ geannuleerd)
 $active_query = "
     SELECT order_id, client_name, datetime, status, address
@@ -143,7 +129,6 @@ $cancelled_orders = $cancelled_stmt->fetchAll(PDO::FETCH_ASSOC);
                 <th>Klantnaam</th>
                 <th>Datum</th>
                 <th>Adres</th>
-                <th>Acties</th>
             </tr>
             <?php foreach ($cancelled_orders as $order): ?>
                 <tr>
@@ -151,11 +136,6 @@ $cancelled_orders = $cancelled_stmt->fetchAll(PDO::FETCH_ASSOC);
                     <td><?php echo htmlspecialchars($order['client_name']); ?></td>
                     <td><?php echo htmlspecialchars($order['datetime']); ?></td>
                     <td><?php echo htmlspecialchars($order['address']); ?></td>
-                    <td>
-                        <form method="POST" action="">
-                            <input type="hidden" name="order_id" value="<?php echo $order['order_id']; ?>">
-                            <button type="submit" name="delete_order">Verwijder Bestelling</button>
-                        </form>
                     </td>
                 </tr>
             <?php endforeach; ?>

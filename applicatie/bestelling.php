@@ -9,37 +9,46 @@ $message = '';
 $client_address = '';
 $personnel_username = null;
 
-// Alleen als een klant is ingelogd
+// Controleer of de klant is ingelogd
 if (isset($_SESSION['role']) && $_SESSION['role'] === 'Client') {
-    // Adres ophalen uit de database voor de ingelogde klant
-    $query = "SELECT address FROM [User] WHERE username = :username";
+    // Haal de gegevens van de klant op
+    $query = "SELECT address, first_name, last_name FROM [User] WHERE username = :username";
     $stmt = $db->prepare($query);
     $stmt->execute([':username' => $_SESSION['username']]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Vul de sessievariabelen in met de opgehaalde gegevens
     $client_address = $result['address'] ?? '';
+    $_SESSION['first_name'] = $result['first_name'] ?? '';
+    $_SESSION['last_name'] = $result['last_name'] ?? '';
 }
 
-// Verwerking van het formulier
+// Verwerk bestelling
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
-    $client_username = $_SESSION['username'] ?? 'Gast';
-    $client_name = htmlspecialchars($_POST['name'] ?? 'Gast');
+    $client_username = $_SESSION['username'] ?? null; // Controleer of gebruikersnaam beschikbaar is
+    if (isset($_SESSION['role']) && $_SESSION['role'] === 'Client' && isset($_SESSION['first_name'], $_SESSION['last_name'])) {
+        $client_name = htmlspecialchars($_SESSION['first_name'] . ' ' . $_SESSION['last_name']);
+    } else {
+        $client_name = 'Gast'; // Gebruik "Gast" als geen naam beschikbaar is
+    }
     $address = htmlspecialchars($_POST['address'] ?? $client_address);
     $order_items = $_SESSION['bestelling'] ?? [];
     $datetime = date('Y-m-d H:i:s');
     $status = 0; // Standaard status voor nieuwe bestellingen
 
+    // Controleer of er producten in de bestelling zitten
     if (empty($order_items)) {
         $message = "Je hebt geen producten in je bestelling.";
     } elseif (empty($address)) {
         $message = "Vul een afleveradres in.";
     } else {
-        // Opslaan of bijwerken van het adres van de klant
-        if (!empty($_SESSION['username']) && $_SESSION['role'] === 'Client') {
+        // Sla het adres op voor ingelogde klanten
+        if (!empty($client_username) && $_SESSION['role'] === 'Client') {
             $updateQuery = "UPDATE [User] SET address = :address WHERE username = :username";
             $updateStmt = $db->prepare($updateQuery);
             $updateStmt->execute([
                 ':address' => $address,
-                ':username' => $_SESSION['username']
+                ':username' => $client_username
             ]);
         }
 
@@ -48,10 +57,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
         $stmt = $db->query($query);
         $personnel_username = $stmt->fetchColumn();
 
-        // Bestelling opslaan in de database
+        // Bestelling opslaan
         $insertOrder = "INSERT INTO [Pizza_Order] 
-            (client_username, client_name, personnel_username, datetime, status, address) 
-            VALUES (:client_username, :client_name, :personnel_username, :datetime, :status, :address)";
+        (client_username, client_name, personnel_username, datetime, status, address) 
+        VALUES (:client_username, :client_name, :personnel_username, :datetime, :status, :address)";
         $stmt = $db->prepare($insertOrder);
         $stmt->execute([
             ':client_username' => $client_username,
@@ -62,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
             ':address' => $address
         ]);
 
-        // Haal het laatst ingevoegde order_id op
+        // Haal de order_id op
         $order_id = $db->lastInsertId();
 
         // Voeg de producten toe aan de Pizza_Order_Product-tabel
@@ -77,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
             ]);
         }
 
-        // Bericht weergeven
+        // Succesbericht weergeven
         $message = "Bestelling geplaatst! Jouw bestelling wordt bezorgd op: $address";
 
         // Leeg de sessie na het plaatsen van de bestelling
@@ -124,9 +133,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
         <p><strong>Totaal: €<?php echo number_format($total, 2); ?></strong></p>
 
         <h2>Afleveradres</h2>
-        <?php if (!empty($client_address)): ?>
-            <p>Uw vorige afleveradres was: <?php echo htmlspecialchars($client_address); ?></p>
-        <?php endif; ?>
         <form method="POST" action="">
             <label for="address">Adres:</label>
             <input type="text" id="address" name="address" value="<?php echo htmlspecialchars($client_address); ?>"
