@@ -8,7 +8,7 @@ $db = maakVerbinding();
 
 // Controleer of de gebruiker is ingelogd en een personeelslid is
 if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'Personnel') {
-    header("Location: login.php");
+    header("Location: inlogPagina.php");
     exit;
 }
 

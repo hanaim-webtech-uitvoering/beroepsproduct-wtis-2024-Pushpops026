@@ -9,7 +9,7 @@ $message = '';
 
 // Alleen toegankelijk voor klanten
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Client') {
-    header("Location: login.php");
+    header("Location: inlogPagina.php");
     exit;
 }
 
