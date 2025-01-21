@@ -24,17 +24,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
 
             // Als de gebruiker bestaat en het wachtwoord klopt
             if ($user && password_verify($password, $user['password']) || $user && $password === $user['password']) {
-                // Sessie-instellingen voor de ingelogde gebruiker
+                // stel sessie in aan de hand van gebruiker role
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['role'] = $user['role'];
 
-                // Redirect naar de juiste pagina op basis van de rol
+                // stuur gebruiker door naar pagina aan de hand van rol
                 if ($user['role'] === 'Client') {
-                    // Eerst de sessie-instellingen verwerken, daarna doorsturen
                     header("Location:index.php");
 
                 } elseif ($user['role'] === 'Personnel') {
-                    // Eerst de sessie-instellingen verwerken, daarna doorsturen
                     header("Location:personeelDashboard.php");
                 }
                 exit;

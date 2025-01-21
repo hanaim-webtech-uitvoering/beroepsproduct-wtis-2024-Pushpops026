@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
     } elseif (empty($address)) {
         $message = "Vul een afleveradres in.";
     } else {
-        // Sla het adres op voor ingelogde klanten
+        // adres opslaan voor ingelogde klant
         if (!empty($client_username) && $_SESSION['role'] === 'Client') {
             $updateQuery = "UPDATE [User] SET address = :address WHERE username = :username";
             $updateStmt = $db->prepare($updateQuery);

@@ -7,7 +7,7 @@ require_once 'db_connectie.php';
 $db = maakVerbinding();
 $message = '';
 
-// Alleen toegankelijk voor klanten
+// controle van role
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Client') {
     header("Location: inlogPagina.php");
     exit;

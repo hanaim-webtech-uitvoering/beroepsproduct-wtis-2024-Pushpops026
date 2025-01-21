@@ -6,7 +6,7 @@ require_once 'db_connectie.php';
 // Maak verbinding met de database
 $db = maakVerbinding();
 
-// Controleer of de gebruiker is ingelogd en een personeelslid is
+// controle van role
 if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'Personnel') {
     header("Location: inlogPagina.php");
     exit;
@@ -89,6 +89,7 @@ $cancelled_orders = $cancelled_stmt->fetchAll(PDO::FETCH_ASSOC);
                     <td><?php echo htmlspecialchars($order['order_id']); ?></td>
                     <td><?php echo htmlspecialchars($order['client_name']); ?></td>
                     <td><?php echo htmlspecialchars($order['datetime']); ?></td>
+                    <td><?php echo htmlspecialchars($order['address']); ?></td>
                     <td>
                         <?php
                         $status_labels = [
@@ -100,7 +101,6 @@ $cancelled_orders = $cancelled_stmt->fetchAll(PDO::FETCH_ASSOC);
                         echo htmlspecialchars($status_labels[$order['status']] ?? 'Onbekend');
                         ?>
                     </td>
-                    <td><?php echo htmlspecialchars($order['address']); ?></td>
                     <td>
                         <form method="POST" action="">
                             <input type="hidden" name="order_id" value="<?php echo $order['order_id']; ?>">
