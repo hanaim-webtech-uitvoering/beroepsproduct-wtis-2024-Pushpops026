@@ -3,11 +3,10 @@ session_start();
 include 'header.php';
 require_once 'db_connectie.php';
 
-// Verbinding maken met de database
 $db = maakVerbinding();
 $message = '';
 
-// Verwerk loginformulier
+// login form
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
     $username = htmlspecialchars($_POST['username']);
     $password = htmlspecialchars($_POST['password']);
@@ -16,24 +15,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
         $message = "Vul zowel een gebruikersnaam als een wachtwoord in.";
     } else {
         try {
-            // Zoek gebruiker op basis van de gebruikersnaam
+            // search for username
             $query = "SELECT username, password, role FROM [User] WHERE username = :username";
             $stmt = $db->prepare($query);
             $stmt->execute([':username' => $username]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            // Als de gebruiker bestaat en het wachtwoord klopt
+            // if username exists and password is correct
             if ($user && password_verify($password, $user['password']) || $user && $password === $user['password']) {
-                // stel sessie in aan de hand van gebruiker role
+                // setup session for user
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['role'] = $user['role'];
 
-                // stuur gebruiker door naar pagina aan de hand van rol
+                // redirect user to the page based on role
                 if ($user['role'] === 'Client') {
                     header("Location:index.php");
 
                 } elseif ($user['role'] === 'Personnel') {
-                    header("Location:personeelDashboard.php");
+                    header("Location:personnelDashboard.php");
                 }
                 exit;
             } else {
@@ -73,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
         <p><?php echo $message; ?></p>
     <?php endif; ?>
 
-    <p>Heb je nog geen account? <a href="registratie.php">Registreer hier</a></p>
+    <p>Heb je nog geen account? <a href="registration.php">Registreer hier</a></p>
 </body>
 
 <?php

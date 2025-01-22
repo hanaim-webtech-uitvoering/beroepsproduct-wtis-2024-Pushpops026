@@ -9,40 +9,38 @@ $message = '';
 $client_address = '';
 $personnel_username = null;
 
-// Controleer of de klant is ingelogd
+// check if client is logged in
 if (isset($_SESSION['role']) && $_SESSION['role'] === 'Client') {
-    // Haal de gegevens van de klant op
+    // retrieve client data
     $query = "SELECT address, first_name, last_name FROM [User] WHERE username = :username";
     $stmt = $db->prepare($query);
     $stmt->execute([':username' => $_SESSION['username']]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Vul de sessievariabelen in met de opgehaalde gegevens
+    // add data to the session variable
     $client_address = $result['address'] ?? '';
     $_SESSION['first_name'] = $result['first_name'] ?? '';
     $_SESSION['last_name'] = $result['last_name'] ?? '';
 }
 
-// Verwerk bestelling
+// process the order
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
-    $client_username = $_SESSION['username'] ?? null; // Controleer of gebruikersnaam beschikbaar is
+    $client_username = $_SESSION['username'] ?? null; // check if the username is available
     if (isset($_SESSION['role']) && $_SESSION['role'] === 'Client' && isset($_SESSION['first_name'], $_SESSION['last_name'])) {
         $client_name = htmlspecialchars($_SESSION['first_name'] . ' ' . $_SESSION['last_name']);
     } else {
-        $client_name = 'Gast'; // Gebruik "Gast" als geen naam beschikbaar is
+        $client_name = 'Gast'; // if there is no account, default to gast
     }
     $address = htmlspecialchars($_POST['address'] ?? $client_address);
-    $order_items = $_SESSION['bestelling'] ?? [];
+    $order_items = $_SESSION['order'] ?? [];
     $datetime = date('Y-m-d H:i:s');
-    $status = 0; // Standaard status voor nieuwe bestellingen
+    $status = 0;
 
-    // Controleer of er producten in de bestelling zitten
-    if (empty($order_items)) {
-        $message = "Je hebt geen producten in je bestelling.";
-    } elseif (empty($address)) {
+    // check if adress is filled in
+    if (empty($address)) {
         $message = "Vul een afleveradres in.";
     } else {
-        // adres opslaan voor ingelogde klant
+        // safe address of logged in client
         if (!empty($client_username) && $_SESSION['role'] === 'Client') {
             $updateQuery = "UPDATE [User] SET address = :address WHERE username = :username";
             $updateStmt = $db->prepare($updateQuery);
@@ -52,12 +50,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
             ]);
         }
 
-        // Willekeurig personeelslid toewijzen
+        // give order to a random employee
         $query = "SELECT username FROM [User] WHERE role = 'Personnel' ORDER BY NEWID()";
         $stmt = $db->query($query);
         $personnel_username = $stmt->fetchColumn();
 
-        // Bestelling opslaan
+        // safe the order
         $insertOrder = "INSERT INTO [Pizza_Order] 
         (client_username, client_name, personnel_username, datetime, status, address) 
         VALUES (:client_username, :client_name, :personnel_username, :datetime, :status, :address)";
@@ -71,26 +69,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
             ':address' => $address
         ]);
 
-        // Haal de order_id op
+        // retrieve order id
         $order_id = $db->lastInsertId();
 
-        // Voeg de producten toe aan de Pizza_Order_Product-tabel
+        // add product to pizza order
         $insertItem = "INSERT INTO [Pizza_Order_Product] (order_id, product_name, quantity) VALUES (:order_id, :product_name, :quantity)";
         $itemStmt = $db->prepare($insertItem);
 
-        foreach ($order_items as $product => $hoeveelheid) {
+        foreach ($order_items as $product => $amount) {
             $itemStmt->execute([
                 ':order_id' => $order_id,
                 ':product_name' => $product,
-                ':quantity' => $hoeveelheid
+                ':quantity' => $amount
             ]);
         }
-
-        // Succesbericht weergeven
         $message = "Bestelling geplaatst! Jouw bestelling wordt bezorgd op: $address";
 
-        // Leeg de sessie na het plaatsen van de bestelling
-        unset($_SESSION['bestelling']);
+        // empty session after order is completed
+        unset($_SESSION['order']);
     }
 }
 ?>
@@ -108,24 +104,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
 <body>
     <h1>Bestelling</h1>
 
-    <?php if (!empty($_SESSION['bestelling'])): ?>
+    <?php if (!empty($_SESSION['order'])): ?>
         <ul>
             <?php
             $total = 0;
-            foreach ($_SESSION['bestelling'] as $product => $hoeveelheid):
-                // Prijs ophalen uit database
+            foreach ($_SESSION['order'] as $product => $amount):
+                // retrieve price from database
                 $query = "SELECT price FROM Product WHERE name = :name";
                 $stmt = $db->prepare($query);
                 $stmt->execute([':name' => $product]);
                 $result = $stmt->fetch(PDO::FETCH_ASSOC);
                 $price = $result['price'];
 
-                $subtotal = $price * $hoeveelheid;
+                $subtotal = $price * $amount;
                 $total += $subtotal;
                 ?>
                 <li>
                     <?php echo htmlspecialchars($product); ?> -
-                    Aantal: <?php echo $hoeveelheid; ?> -
+                    Aantal: <?php echo $amount; ?> -
                     Subtotaal: €<?php echo number_format($subtotal, 2); ?>
                 </li>
             <?php endforeach; ?>

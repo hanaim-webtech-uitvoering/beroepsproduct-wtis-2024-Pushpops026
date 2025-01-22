@@ -11,7 +11,7 @@ body {
     color: #333;
 }
 
-/* Container voor menu-items */
+
 .menu-container {
     display: flex;
     flex-direction: column;
@@ -24,7 +24,6 @@ body {
 }
 
 
-/* Titels */
 h1,
 h2 {
     text-align: center;
@@ -152,6 +151,5 @@ i {
 
 .content {
     flex: 1;
-    /* Zorgt dat de content de resterende ruimte inneemt */
     padding: 20px;
 }

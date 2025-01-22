@@ -7,15 +7,15 @@ require_once 'db_connectie.php';
 $db = maakVerbinding();
 $message = '';
 
-// controle van role
+// check role permissions
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Client') {
-    header("Location: inlogPagina.php");
+    header("Location: login.php");
     exit;
 }
 
 $client_username = $_SESSION['username'];
 
-// Haal de laatste bestelling op van de ingelogde klant
+// retrieve last order
 $query = "
     SELECT TOP 1 order_id, personnel_username, datetime, status, address
     FROM [Pizza_Order]
@@ -47,7 +47,7 @@ if ($order) {
 }
 
 
-// Annuleer de bestelling
+// cancel the order
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order']) && $order) {
     $update_query = "
         UPDATE [Pizza_Order]
@@ -58,8 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order']) && $o
     $update_stmt->execute([':order_id' => $order['order_id']]);
 
     $message = "Uw bestelling is geannuleerd.";
-    // Refresh de bestelling na annulering
-    header("Location: klantBestelOverzicht.php");
+    // refresh the page
+    header("Location: customerOrderDashboard.php");
     exit;
 }
 
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order']) && $o
         <p><strong>Bestelnummer:</strong> <?php echo $order['order_id']; ?></p>
         <p><strong>Bezorgadres:</strong> <?php echo htmlspecialchars($order['address']); ?></p>
         <p><strong>Bestelling geplaatst op:</strong> <?php echo $order['datetime']; ?></p>
-        <p><strong>Huidige status:</strong> <?php echo $status_map[$order['status']] ?? 'Onbekend'; ?></p>
+        <p><strong>Huidige status:</strong> <?php echo $status_map[$order['status']] ?? 'unknown'; ?></p>
         <p><strong>Personeelslid toegewezen:</strong> <?php echo htmlspecialchars($order['personnel_username']); ?></p>
 
         <h2>Bestelde Producten:</h2>

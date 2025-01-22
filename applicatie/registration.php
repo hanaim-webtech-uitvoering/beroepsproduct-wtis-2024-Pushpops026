@@ -13,13 +13,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $last_name = htmlspecialchars($_POST['last_name']);
     $role = 'Client';
 
-    // Validatie
+    // validation
     if (empty($username) || empty($password) || empty($first_name) || empty($last_name)) {
         $message = "Alle velden zijn verplicht.";
     } elseif ($password !== $confirm_password) {
         $message = "Wachtwoorden komen niet overeen.";
     } else {
-        // Controleren of de gebruikersnaam al bestaat
+        // check if username already exists
         $query = "SELECT username FROM [User] WHERE username = :username";
         $stmt = $db->prepare($query);
         $stmt->execute([':username' => $username]);
@@ -27,10 +27,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($stmt->fetch()) {
             $message = "De gebruikersnaam is al in gebruik.";
         } else {
-            // Hash wachtwoord
+            // password hash
             $hashed_password = password_hash($password, PASSWORD_BCRYPT);
 
-            // Nieuwe gebruiker toevoegen
+            // add new user
             $query = "INSERT INTO [User] (username, password, first_name, last_name, role) VALUES (:username, :password, :first_name, :last_name, :role)";
             $stmt = $db->prepare($query);
             $stmt->execute([
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 ':role' => $role,
             ]);
 
-            $message = "Registratie succesvol! Je kunt nu <a href='inlogPagina.php'>inloggen</a>.";
+            $message = "Registratie succesvol! Je kunt nu <a href='login.php'>inloggen</a>.";
         }
     }
 }

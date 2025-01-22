@@ -3,19 +3,18 @@ session_start();
 include 'header.php';
 require_once 'db_connectie.php';
 
-// Maak verbinding met de database
 $db = maakVerbinding();
 
-// controle van role
+// check role permissions
 if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'Personnel') {
-    header("Location: inlogPagina.php");
+    header("Location: login.php");
     exit;
 }
 
 $message = '';
 $username = $_SESSION['username'];
 
-// Verwerk statuswijziging
+// handle order status
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'], $_POST['status'])) {
     $order_id = (int) $_POST['order_id'];
     $status = (int) $_POST['status'];
@@ -31,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'], $_POST['s
     $message = "De status van bestelling #$order_id is bijgewerkt.";
 }
 
-// Actieve bestellingen ophalen (status ≠ geannuleerd)
+// active orders
 $active_query = "
     SELECT order_id, client_name, datetime, status, address
     FROM [Pizza_Order]
@@ -42,7 +41,7 @@ $active_stmt = $db->prepare($active_query);
 $active_stmt->execute([':personnel_username' => $username]);
 $active_orders = $active_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Geannuleerde bestellingen ophalen (status = geannuleerd)
+// cancelled orders
 $cancelled_query = "
     SELECT order_id, client_name, datetime, status, address
     FROM [Pizza_Order]
@@ -67,12 +66,10 @@ $cancelled_orders = $cancelled_stmt->fetchAll(PDO::FETCH_ASSOC);
 <body>
     <h1>Personeelsdashboard</h1>
 
-    <!-- Feedbackbericht -->
     <?php if ($message): ?>
         <p><?php echo htmlspecialchars($message); ?></p>
     <?php endif; ?>
 
-    <!-- Sectie: Actieve Bestellingen -->
     <h2>Actieve Bestellingen</h2>
     <?php if ($active_orders): ?>
         <table border="1">
@@ -98,7 +95,7 @@ $cancelled_orders = $cancelled_stmt->fetchAll(PDO::FETCH_ASSOC);
                             2 => 'Bezorgd',
                             3 => 'Geannuleerd',
                         ];
-                        echo htmlspecialchars($status_labels[$order['status']] ?? 'Onbekend');
+                        echo htmlspecialchars($status_labels[$order['status']] ?? 'unknown');
                         ?>
                     </td>
                     <td>
@@ -120,7 +117,6 @@ $cancelled_orders = $cancelled_stmt->fetchAll(PDO::FETCH_ASSOC);
         <p>Er zijn geen actieve bestellingen.</p>
     <?php endif; ?>
 
-    <!-- Sectie: Geannuleerde Bestellingen -->
     <h2>Geannuleerde Bestellingen</h2>
     <?php if ($cancelled_orders): ?>
         <table border="1">

@@ -3,44 +3,44 @@ session_start();
 include 'header.php';
 require_once 'db_connectie.php';
 
-// maak verbinding met de database
 $db = maakVerbinding();
 
-$_SESSION['bestelling'] = $_SESSION['bestelling'] ?? [];
+$_SESSION['order'] = $_SESSION['order'] ?? [];
 
-if (!isset($_SESSION['bestelling'])) {
-    $_SESSION['bestelling'] = [];
+if (!isset($_SESSION['order'])) {
+    $_SESSION['order'] = [];
 }
 
 try {
-    // Hier wordt de productenlijst opgehaald zoals je het al hebt ingesteld
+    // retrieve products
     $query = "SELECT name, price, type_id FROM Product";
     $stmt = $db->query($query);
-    $producten = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Als er een product wordt toegevoegd aan de bestelling
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['product_name'], $_POST['hoeveelheid'])) {
+    // adding products to order
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['product_name'], $_POST['amount'])) {
         $product_name = $_POST['product_name'];
-        $hoeveelheid = (int) $_POST['hoeveelheid'];
+        $amount = (int) $_POST['amount'];
 
-        if ($hoeveelheid > 0) {
-            if (!isset($_SESSION['bestelling'][$product_name])) {
-                $_SESSION['bestelling'][$product_name] = $hoeveelheid; // Voeg nieuw product toe
+        if ($amount > 0) {
+            if (!isset($_SESSION['order'][$product_name])) {
+                $_SESSION['order'][$product_name] = $amount;
             } else {
-                $_SESSION['bestelling'][$product_name] += $hoeveelheid; // Verhoog bestaande hoeveelheid
+                $_SESSION['order'][$product_name] += $amount;
             }
         }
     }
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verwijder_product'])) {
+    // remove/delete products from order
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_product'])) {
         $product_name = $_POST['product_name'];
-        $aantal_verwijderen = (int) $_POST['aantal_verwijderen'];
+        $delete_amount = (int) $_POST['delete_amount'];
 
-        if (isset($_SESSION['bestelling'][$product_name])) {
-            // Verminder het aantal producten of verwijder het product als de hoeveelheid op 0 komt
-            if ($_SESSION['bestelling'][$product_name] > $aantal_verwijderen) {
-                $_SESSION['bestelling'][$product_name] -= $aantal_verwijderen;
+        if (isset($_SESSION['order'][$product_name])) {
+
+            if ($_SESSION['order'][$product_name] > $delete_amount) {
+                $_SESSION['order'][$product_name] -= $delete_amount;
             } else {
-                unset($_SESSION['bestelling'][$product_name]); // Verwijder het product als het aantal 0 of minder is
+                unset($_SESSION['order'][$product_name]);
             }
         }
     }
@@ -65,20 +65,18 @@ try {
     <h1>Ons Menu</h1>
     <div class="content">
         <div class="menu-container">
-            <?php if (!empty($producten)): ?>
-                <?php foreach ($producten as $product): ?>
+            <?php if (!empty($products)): ?>
+                <?php foreach ($products as $product): ?>
                     <div class="menu-item">
                         <h3><?php echo htmlspecialchars($product['name']); ?></h3>
                         <p>Prijs: €<?php echo number_format($product['price'], 2); ?></p>
                         <p>Type: <?php echo htmlspecialchars($product['type_id']); ?></p>
 
-                        <!-- Formulier om een product toe te voegen -->
                         <form method="POST" action="">
                             <input type="hidden" name="product_name" value="<?php echo htmlspecialchars($product['name']); ?>">
-                            <label for="hoeveelheid-<?php echo htmlspecialchars($product['name']); ?>">Hoeveelheid:</label>
-                            <input type="number" name="hoeveelheid"
-                                id="hoeveelheid-<?php echo htmlspecialchars($product['name']); ?>" min="1" value="1"
-                                style="width: 60px;">
+                            <label for="amount-<?php echo htmlspecialchars($product['name']); ?>">Hoeveelheid:</label>
+                            <input type="number" name="amount" id="amount-<?php echo htmlspecialchars($product['name']); ?>"
+                                min="1" value="1" style="width: 60px;">
                             <button type="submit">Toevoegen aan bestelling</button>
                         </form>
                     </div>
@@ -89,25 +87,25 @@ try {
         </div>
 
         <h2>Je Bestelling</h2>
-        <div class="bestelling-container">
-            <?php if (!empty($_SESSION['bestelling'])): ?>
+        <div class="order-container">
+            <?php if (!empty($_SESSION['order'])): ?>
                 <ul>
-                    <?php foreach ($_SESSION['bestelling'] as $product => $hoeveelheid): ?>
+                    <?php foreach ($_SESSION['order'] as $product => $amount): ?>
                         <li>
-                            <?php echo htmlspecialchars($product) . " - Hoeveelheid: " . $hoeveelheid; ?>
+                            <?php echo htmlspecialchars($product) . " - amount: " . $amount; ?>
                             <form method="POST" action="" style="display:inline;">
                                 <input type="hidden" name="product_name" value="<?php echo htmlspecialchars($product); ?>">
-                                <label for="aantal_verwijderen-<?php echo htmlspecialchars($product); ?>">Aantal te
+                                <label for="delete_amount-<?php echo htmlspecialchars($product); ?>">Aantal te
                                     verwijderen:</label>
-                                <input type="number" name="aantal_verwijderen"
-                                    id="aantal_verwijderen-<?php echo htmlspecialchars($product); ?>" min="1"
-                                    max="<?php echo $hoeveelheid; ?>" value="1" style="width: 60px;">
-                                <button type="submit" name="verwijder_product">Verwijderen</button>
+                                <input type="number" name="delete_amount"
+                                    id="delete_amount-<?php echo htmlspecialchars($product); ?>" min="1"
+                                    max="<?php echo $amount; ?>" value="1" style="width: 60px;">
+                                <button type="submit" name="delete_product">Verwijderen</button>
                             </form>
                         </li>
                     <?php endforeach; ?>
                 </ul>
-                <form method="GET" action="bestelling.php">
+                <form method="GET" action="order.php">
                     <button type="submit">Ga naar Bestellen</button>
                 </form>
             <?php else: ?>
@@ -121,26 +119,3 @@ include 'footer.php';
 ?>
 
 </html>
-
-<?php
-// Toevoegen aan bestelling
-if (isset($_POST['add_to_order'])) {
-    $product_name = $_POST['product_name'];
-    $price = $_POST['price'];
-    $quantity = $_POST['quantity'];
-
-    $item = [
-        'name' => $product_name,
-        'price' => $price,
-        'quantity' => $quantity
-    ];
-
-    if (!isset($_SESSION['order'])) {
-        $_SESSION['order'] = [];
-    }
-
-    $_SESSION['order'][] = $item;
-    header("Location: index.php");
-    exit;
-}
-?>
